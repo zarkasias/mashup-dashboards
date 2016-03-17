@@ -1,0 +1,206 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="iot-panel">
+  <template>
+    
+  <style>
+        
+    .iot-panel-title {
+          margin-left: 0px !important;
+          font-size: 18px;
+          line-height: 2 !important;
+      }
+      
+      .panel-body  {
+          height: 300px;
+          background-color: #999999;
+      } 
+      
+      .section-hide {
+          display: none;
+      }
+      .section-show {
+          display: inline;
+      }
+      
+       paper-dropdown-menu.custom {
+        --paper-input-container-label: {
+          background-color: transparent;
+        };
+      }
+      
+      paper-icon-button.settings-button:active, paper-icon-button.settings-button:focus, paper-icon-button.built-button:active, paper-icon-button.build-button:focus {
+        color: #999999;
+        }
+      
+  </style>      
+      
+    <div class="col-xs-12 col-md-3" style="margin-bottom: 20px;">
+       <paper-material elevation="2">
+           <paper-toolbar class="iot-panel-toolbar">
+                <span class="title iot-panel-title">{{paneltitle}}</span>
+               
+               
+               <paper-icon-button id="chart-settings-button" class="settings-button" icon="settings" on-click="showSettings"></paper-icon-button>
+               <paper-icon-button id="panel-settings-button" class="build-button" icon="build" on-click="editPanel"></paper-icon-button>    
+               
+           </paper-toolbar>
+           <div id="panel-body-{{id}}" class="panel-body">
+               
+           <div id="settings-{{id}}" class="section-hide">
+               <paper-dropdown-menu class="custom" label="Channel" on-iron-select="_channelSelected">
+                  <paper-menu id="channel-selector" attr-for-selected="value" class="dropdown-content">
+                      <template id="channel-items" is="dom-repeat" items="{{channels}}">
+                          <paper-item value="{{item}}">{{item}}</paper-item>
+                      </template>
+                  </paper-menu>
+                </paper-dropdown-menu> 
+               
+                <paper-dropdown-menu class="custom" label="Chart" on-iron-select="_chartSelected">
+                  <paper-menu id="chart-selector" attr-for-selected="value" class="dropdown-content">
+                      <template id="chart-items" is="dom-repeat" items="{{charts}}">
+                          <paper-item value="{{item}}">{{item}}</paper-item>
+                      </template>
+                  </paper-menu>
+                </paper-dropdown-menu>  
+            </div>   
+               
+<!--            <div>{{datavalue}}</div>   -->
+            
+            <div id="chart-{{id}}" class="section-hide">   
+                <google-chart
+                      id="{{chartid}}"             
+                      style="width: 100%"
+                      type="{{charttype}}"
+                      options='{"title": "", "backgroundColor": "transparent", "legend": "none", "is3D": "true"}'
+                      cols='[{"label": "Data", "type": "string"},{"label": "Data", "type": "number"}]'
+                      rows="{{datavalue}}">          
+                </google-chart>
+               </div>    
+               
+           </div>
+           
+
+        </paper-material>
+
+      </template>
+
+    </div>    
+
+  <script>
+    (function() {
+      'use strict';
+
+      Polymer({
+        is: 'iot-panel',
+          // declare properties for the element's public API
+        behaviors: [
+          Polymer.IronResizableBehavior
+        ],
+
+        properties: {
+            
+            paneltitle: {
+                type: String,
+                value: "title"
+            },
+            
+            id: {
+                type: String,
+                value: null
+            },
+            
+            datavalue: {
+                type: Array,
+                value: [["d1", 31],["d2", 28],["d3", 31]]
+            },
+            
+            channels: {
+                type: Array,
+                value: []
+            },
+            
+            charts: {
+                type: Array,
+                value: ["pie", "line", "bar"]
+            },
+            
+            selectchannel: {
+                type: String,
+                value: null
+            },
+            
+            chartselected: {
+                type: Boolean,
+                value: false
+            },
+            
+            charttype: {
+                type: String,
+                value: "pie"
+            },
+            
+            chartid: {
+                type: String,
+                value: null
+            },
+            socket: {
+                value: null
+            }
+        },
+          
+        listeners: {
+          'iron-resize': '_onIronResize'
+        },  
+          
+               
+          _onIronResize: function() {
+                if (this.chartid) {
+                    document.getElementById(this.chartid).drawChart();
+                }
+            },
+          
+        _channelSelected : function(e) {
+            var selectedItem = e.target.selectedItem;
+            if (selectedItem) {
+               this.selectchannel = selectedItem.innerText;
+            }
+          },
+          
+       _chartSelected : function(e) {
+            var selectedItem = e.target.selectedItem;
+            if (selectedItem) {
+               this.charttype = selectedItem.innerText;
+               this.chartselected = true;    
+            }
+           jQuery("#settings-" + this.id).toggleClass("section-show");
+           jQuery("#chart-" + this.id).toggleClass("section-show");
+        },  
+          
+        showSettings: function(e) {
+            var id = e.target.parentElement.getAttribute("id");
+            //this.$[id].toggles = !this.$[id].toggles;
+                jQuery("#settings-" + this.id).toggleClass("section-show");
+            if (this.chartselected) {
+                jQuery("#chart-" + this.id).toggleClass("section-show");
+            }
+            
+        },
+          
+        editPanel: function(e) {
+            console.log(e.target.parentElement.getAttribute("id"));
+        }, 
+          
+        ready: function(e) {
+            
+        }
+        
+          
+
+      });
+        
+
+            
+    })();
+  </script>
+</dom-module>

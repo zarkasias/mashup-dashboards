@@ -1,0 +1,177 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="iot-dashboard">
+    
+    
+    
+  <template>
+   <paper-toolbar class="header">
+    
+       <paper-dropdown-menu class="custom" label="Subscribe to Channel" on-iron-select="_itemSelected">
+                  <paper-menu id="channel-selector" attr-for-selected="value" class="dropdown-content">
+                      <template id="channel-items" is="dom-repeat" items="{{channels}}">
+                          <paper-item value="{{item}}">{{item}}</paper-item>
+                      </template>
+                  </paper-menu>
+                </paper-dropdown-menu>  
+      
+    </paper-toolbar>
+   <div class="dashboard-body"> 
+    
+       <iot-panel id="p1" paneltitle="thingy 1" chartid="chart1"></iot-panel>
+       <iot-panel id="p2" paneltitle="thingy 2" chartid="chart2"></iot-panel>
+       <iot-panel id="p3" paneltitle="thingy 3" chartid="chart3"></iot-panel>
+       <iot-panel id="p4" paneltitle="thingy 4" chartid="chart4"></iot-panel>
+      
+    </div>
+      
+  </template>
+
+  <script>
+    (function() {
+      'use strict';
+
+      Polymer({
+        is: 'iot-dashboard',
+
+        properties: {
+            
+            channels: {
+                type: Array,
+                value: ["test"]
+            },
+            
+            selectedchannels: {
+                type: Array,
+                value: []
+            }
+        },
+          
+        ready: function() {
+            getChannels(this);
+        },  
+          
+        _itemSelected : function(e) {
+            var dashboard = this;
+            var selectedItem = e.target.selectedItem;
+            if (selectedItem) {
+               this.selectedchannels.push(selectedItem.innerText);
+                
+                var channel = selectedItem.innerText;
+                channelsubscribe(channel, dashboard);
+                
+            }
+          },    
+          
+          
+      });
+
+        
+        function getChannels(dashboard) {
+             //typeSelect.removeAllItems();
+             
+             jQuery.ajax({
+    			url: "http://localhost:3000/channels",
+    			type: "GET",
+    			success:  function(data) {
+                    //setChannelData(dashboard,data);
+                    dashboard.channels = data;
+    			    
+    			},
+    			error: function(xhr, textStatus, errorThrown){
+                        console.log(xhr.responseText);
+                }
+    		});
+         }
+        
+        var sUrl = "http://localhost:3000";
+        var socket = io.connect('http://localhost:3000/');
+        var board;
+        
+        function channelsubscribe(channel, dashboard) {
+         var ch = {"channel": channel};
+        var data = JSON.stringify(ch);
+            
+        setChannelData(channel, dashboard);    
+    
+        $.ajax({
+            url: sUrl + "/subscribe",
+            data: data,
+            contentType: 'application/json; charset=UTF-8',
+            type: "POST",
+            success:  function() {
+                console.log('success');
+
+            },
+            error: function(xhr, textStatus, errorThrown){
+                    console.log(xhr.responseText);
+            }
+        });
+
+    }
+        
+        socket.on('message', function (data) {
+        console.log('received a message: ', data);
+        addMessage(data);
+      });
+        
+        function setChannelData(channel, dashboard) {
+            board = dashboard;
+            dashboard.$.p1.push("channels", channel);
+            dashboard.$.p2.push("channels", channel);
+            dashboard.$.p3.push("channels", channel);
+            dashboard.$.p4.push("channels", channel);
+        }
+        
+        //        function initSocket() {
+//            socket.on('connect', function(data){
+//                setStatus('connected');
+//                socket.emit('subscribe', {channel:channel});
+//            });
+//        }
+//   
+        socket.on('reconnecting', function(data){
+            setStatus('reconnecting');
+          });
+
+          
+
+      function addMessage(data) {
+            var dataArray = data.split("|");
+            var channel = dataArray[0];
+            var dataObject = JSON.parse(dataArray[1]);
+            console.log(dataObject);
+            var dataValue = [];
+          //[["d1", 31],["d2", 28],["d3", 31]]
+              for (var i in dataObject) {
+              if (dataObject.hasOwnProperty(i)) {
+                  var dval = [];
+                  dval.push(i.toString());
+                  dval.push(Number(dataObject[i]));
+                  dataValue.push(dval);
+                }
+            }
+            console.log(dataValue);
+
+              if (board.$.p1.selectchannel === channel) {
+                    board.$.p1.datavalue = dataValue;   
+              }
+              if (board.$.p2.selectchannel === channel) {
+                    board.$.p2.datavalue = dataValue;   
+              }
+              if (board.$.p3.selectchannel === channel) {
+                    board.$.p3.datavalue = dataValue;   
+              }
+              if (board.$.p4.selectchannel === channel) {
+                    board.$.p4.datavalue = dataValue;   
+              }
+              
+      }
+//
+//      function setStatus(msg) {
+//          console.log('Connection Status : ' + msg);
+//      }
+        
+    })();
+  </script>
+</dom-module>
