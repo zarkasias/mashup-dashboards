@@ -1,0 +1,15 @@
+
+body {
+  background: #343536;
+  margin: 0;
+  padding: 0;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.header {
+    background: #54c2c1;
+}
+
+.dashboard-body {
+    margin: 10px auto;
+}
